@@ -85,8 +85,8 @@ stages:
               package: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
 - stage: Tests
   jobs: 
-    - job: Postman 
-      displayName: Postman 
+    - job: Tests
+      displayName: Tests
       steps:
       - task: Npm@1
         displayName: 'Install Newman'
@@ -101,3 +101,24 @@ stages:
         inputs:
           testResultsFiles: JUnitReport.xml
           searchFolder: '$(System.DefaultWorkingDirectory)'
+      - task: JMeterInstaller@0
+        displayName: 'Install JMeter 5.2.1'
+        inputs:
+         jmeterVersion: '5.2.1'
+      - task: Bash@3
+        displayName: 'Jmeter Stress Test'
+        inputs:
+          targetType: 'inline'
+          script: |
+             jmeter -n -t ./automatedtesting/jmeter/Stress_test.jmx -l ./automatedtesting/jmeter/stress_test_result.csv -e -o ./automatedtesting/jmeter/stress_test_html_report/ -j ./automatedtesting/jmeter/jmeter_stress_test.log
+      - task: Bash@3
+        displayName: 'Jmeter Endurance Test'
+        inputs:
+          targetType: 'inline'
+          script: |
+             jmeter -n -t ./automatedtesting/jmeter/Endurance_test.jmx -l ./automatedtesting/jmeter/Endurance_test_result.csv -e -o ./automatedtesting/jmeter/Endurance_test_html_report/ -j ./automatedtesting/jmeter/jmeter_endurance_test.log
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: 'automatedtesting/jmeter'
+          ArtifactName: 'jmeter'
+          publishLocation: 'Container'
