@@ -66,7 +66,7 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-fakerestapi.zip
       displayName: 'Upload Package'
       artifact: drop-fakerestapi
-- stage:
+- stage: Deploy
   jobs:
   - deployment: FakeRestAPI
     pool:
@@ -83,3 +83,21 @@ stages:
               appName: '$(appName)'
               appType: webApp
               package: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
+- stage: Tests
+  jobs: 
+    - job: Postman 
+      displayName: Postman 
+      steps:
+      - task: Npm@1
+        displayName: 'Install Newman'
+        inputs:
+          workingDir: '$(System.DefaultWorkingDirectory)'
+          verbose: false
+      - script: newman run ./automatedtesting/postman/StarterAPIs.json --reporters cli,junit --reporter-junit-export ./JUnitReport.xml --suppress-exit-code
+        displayName: 'Run Newman'
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+      - task: PublishTestResults@2
+        displayName: 'Publish Test Results'
+        inputs:
+          testResultsFiles: JUnitReport.xml
+          searchFolder: '$(System.DefaultWorkingDirectory)'
