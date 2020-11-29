@@ -20,11 +20,11 @@ stages:
       displayName: 'Download tfvars file'
       inputs:
         secureFile: 'terraform.tfvars' 
-  - task: InstallSSHKey@0
+    - task: InstallSSHKey@0
       inputs:
         knownHostsEntry: 'default'
         sshKeySecureFile: 'id_rsa'
-  - task: Bash@3
+    - task: Bash@3
       displayName: 'Move tfvars file'
       inputs:
         targetType: 'inline'
