@@ -15,12 +15,12 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-  - task: DownloadSecureFile@1
+    - task: DownloadSecureFile@1
       name: tfvars
       displayName: 'Download tfvars file'
       inputs:
         secureFile: 'terraform.tfvars' 
-  - task: Bash@3
+    - task: Bash@3
       displayName: 'Move tfvars file'
       inputs:
         targetType: 'inline'
