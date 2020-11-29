@@ -15,7 +15,7 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-  - task: DownloadSecureFile@1
+    - task: DownloadSecureFile@1
       name: tfvars
       displayName: 'Download tfvars file'
       inputs:
