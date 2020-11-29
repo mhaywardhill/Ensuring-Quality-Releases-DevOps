@@ -15,6 +15,17 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
+  - task: DownloadSecureFile@1
+      name: tfvars
+      displayName: 'Download tfvars file'
+      inputs:
+        secureFile: 'terraform.tfvars' 
+  - task: Bash@3
+      displayName: 'Move tfvars file'
+      inputs:
+        targetType: 'inline'
+        script: |
+          mv /home/vsts/work/_temp/terraform.tfvars $(System.DefaultWorkingDirectory)/terraform/environments/test
     - task: TerraformInstaller@0
       displayName: Install Terraform
       inputs:
