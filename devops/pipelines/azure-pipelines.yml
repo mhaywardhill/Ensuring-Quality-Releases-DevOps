@@ -4,6 +4,8 @@ trigger:
 variables:
 - group: terraform-group
 
+- group: pl-group
+
 - name: vmImageName
   value: 'ubuntu-latest' 
 
@@ -64,4 +66,20 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-fakerestapi.zip
       displayName: 'Upload Package'
       artifact: drop-fakerestapi
-
+- stage:
+  jobs:
+  - deployment: FakeRestAPI
+    pool:
+      vmImage: $(vmImageName)
+    environment: $(environmentName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            displayName: 'Deploy Azure Web App'
+            inputs:
+              azureSubscription: '$(service_name)'
+              appName: '$(appName)'
+              appType: webApp
+              package: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
