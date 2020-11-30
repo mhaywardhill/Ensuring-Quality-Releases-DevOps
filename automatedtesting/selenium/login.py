@@ -5,7 +5,8 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 import time
 from datetime import datetime
 
-datetime.now().strftime("%m-%d-%y %H:%M:%S")
+now = datetime.now().strftime("%m-%d-%y %H:%M:%S")
+print(now)
 
 url = "https://www.saucedemo.com/"
 inventory_url = "https://www.saucedemo.com/inventory.html"
