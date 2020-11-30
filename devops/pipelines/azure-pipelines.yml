@@ -125,7 +125,7 @@ stages:
                 sudo chown root:root /usr/bin/chromedriver
                 sudo chmod +x /usr/bin/chromedriver
                 #log analytics agent
-                wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w c3f72108-602f-44cd-ad58-0f43e3ff3bea -s QiPkLapj76Gf7TzDz4GoflNaTngVS9/AnRLOZjA4jQ79WIlU0zq+YPIhH0P1ROxP1grHMzl05GCJYA6Iaf8Dyg== -d opinsights.azure.com
+                wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w <YOUR WORKSPACE ID> -s <YOUR WORKSPACE PRIMARY KEY> -d opinsights.azure.com
 
           - download: current
             displayName: 'Download Selenium'
@@ -137,10 +137,10 @@ stages:
               script: |
                 unzip -o $(Pipeline.Workspace)/Selenium/selenium-test.zip -d .
                 pwd
-                sudo mkdir /var/logs
+                sudo mkdir logs
                 python3 login.py > UI_test.log
                 cat UI_test.log
-                sudo mv UI_test.log /var/logs
+                sudo mv UI_test.log logs
 - stage: Tests
   jobs: 
     - job: Tests
