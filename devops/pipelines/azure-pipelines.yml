@@ -136,8 +136,9 @@ stages:
               targetType: 'inline'
               script: |
                 unzip -o $(Pipeline.Workspace)/Selenium/selenium-test.zip -d .
+		pwd
 		sudo mkdir /var/logs
-                python3.exe login.py > UI_test.log
+                python3 login.py > UI_test.log
                 cat UI_test.log
                 sudo mv UI_test.log /var/logs
 - stage: Tests
