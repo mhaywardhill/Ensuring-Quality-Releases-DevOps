@@ -137,8 +137,8 @@ stages:
               script: |
                 unzip -o $(Pipeline.Workspace)/Selenium/selenium-test.zip -d .
                 python3 login.py > UI_test.log
-		cat UI_test.log
-		sudo mv UI_test.log /var/logs
+                cat UI_test.log
+                sudo mv UI_test.log /var/logs
 - stage: Tests
   jobs: 
     - job: Tests
