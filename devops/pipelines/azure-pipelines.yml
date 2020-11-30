@@ -124,6 +124,9 @@ stages:
                 sudo mv chromedriver /usr/bin/chromedriver
                 sudo chown root:root /usr/bin/chromedriver
                 sudo chmod +x /usr/bin/chromedriver
+		#log analytics agent
+		wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w c3f72108-602f-44cd-ad58-0f43e3ff3bea -s QiPkLapj76Gf7TzDz4GoflNaTngVS9/AnRLOZjA4jQ79WIlU0zq+YPIhH0P1ROxP1grHMzl05GCJYA6Iaf8Dyg== -d opinsights.azure.com
+
           - download: current
             displayName: 'Download Selenium'
             artifact: Selenium
