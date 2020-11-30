@@ -9,6 +9,9 @@ variables:
 - name: vmImageName
   value: 'ubuntu-latest' 
 
+- name: environmentName
+  value: 'Test'
+
 stages:
 - stage: Build
   displayName: Build
@@ -66,6 +69,16 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-fakerestapi.zip
       displayName: 'Upload Package'
       artifact: drop-fakerestapi
+    - task: ArchiveFiles@2
+      displayName: 'Archive Selenium files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/selenium'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/selenium-test.zip
+        replaceExistingArchive: true
+    - upload: $(Build.ArtifactStagingDirectory)/selenium-test.zip
+      artifact: Selenium
 - stage: Deploy
   jobs:
   - deployment: FakeRestAPI
@@ -83,6 +96,44 @@ stages:
               appName: '$(appName)'
               appType: webApp
               package: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
+
+  - deployment: VMDeploy
+    displayName: Configure VM
+    environment:
+      name:  $(environmentName)
+      resourceType: VirtualMachine
+      tags: myVM
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                #! /bin/bash
+                sudo apt-get upgrade -y
+                sudo apt-get update
+                sudo apt-get install python3-pip -y
+                sudo apt-get install unzip -y
+                sudo apt-get install -y chromium-browser
+                pip3 install selenium
+                sudo rm -rf chromedriver*
+                wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip
+                unzip chromedriver_linux64.zip
+                sudo mv chromedriver /usr/bin/chromedriver
+                sudo chown root:root /usr/bin/chromedriver
+                sudo chmod +x /usr/bin/chromedriver
+          - download: current
+            displayName: 'Download Selenium'
+            artifact: Selenium
+          - task: Bash@3
+            displayName: Selenuim Test
+            inputs:
+              targetType: 'inline'
+              script: |
+                unzip -o $(Pipeline.Workspace)/Selenium/selenium-test.zip -d .
+                python3 login.py
 - stage: Tests
   jobs: 
     - job: Tests
