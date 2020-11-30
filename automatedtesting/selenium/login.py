@@ -2,6 +2,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+import time
+from datetime import datetime
+
+datetime.now().strftime("%m-%d-%y %H:%M:%S")
 
 url = "https://www.saucedemo.com/"
 inventory_url = "https://www.saucedemo.com/inventory.html"
