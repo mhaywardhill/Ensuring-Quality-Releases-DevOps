@@ -7,12 +7,11 @@ import time
 timestamp = time.strftime('%b-%d-%Y_%H%M')
 output_file = "/var/log/selenium/uitest_"+timestamp+".log"
 
-
 #Create and configure logger 
 logging.basicConfig(filename=output_file, 
-                    format='%(asctime)s %(message)s', 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+                    datefmt='%Y-%m-%d %H:%M:%S',
                     filemode='w') 
-  
 #Creating an object 
 logger=logging.getLogger() 
   
