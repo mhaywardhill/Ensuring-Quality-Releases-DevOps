@@ -21,16 +21,15 @@ stages:
       vmImage: $(vmImageName)
     steps:
     - task: DownloadSecureFile@1
-      name: tfvars
+      name: terraformvarsfile
       displayName: 'Download tfvars file'
       inputs:
         secureFile: 'terraform.tfvars' 
     - task: InstallSSHKey@0
       inputs:
-        knownHostsEntry: 'default'
+        knownHostsEntry: 'known_hosts'
         sshKeySecureFile: 'id_rsa'
     - task: Bash@3
-      displayName: 'Move tfvars file'
       inputs:
         targetType: 'inline'
         script: |
@@ -40,7 +39,7 @@ stages:
       inputs:
         terraformVersion: '0.13.4'
     - task: TerraformTaskV1@0
-      displayName: Terraform Init
+      displayName: 'Terraform Init'
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -51,7 +50,7 @@ stages:
         backendAzureRmKey: '$(key)'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
     - task: TerraformTaskV1@0
-      displayName: Terraform Apply  
+      displayName: 'Terraform Apply'
       inputs:
         provider: 'azurerm'
         command: 'apply'
@@ -59,6 +58,14 @@ stages:
          -auto-approve 
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: '$(service_name)'
+
+- stage: Artifacts
+  displayName: Artifacts
+  jobs:
+  - job: Artifacts
+    pool:
+      vmImage: $(vmImageName)
+    steps:
     - task: ArchiveFiles@2
       displayName: 'Archive FakeRestAPI'
       inputs:
@@ -68,11 +75,21 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-fakerestapi.zip'
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-fakerestapi.zip
       displayName: 'Upload Package'
-      artifact: drop-fakerestapi
-    
+      artifact: drop-fakerestapi    
+    - task: ArchiveFiles@2
+      displayName: 'Archive Selenium files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/selenium'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/selenium.zip
+        replaceExistingArchive: true
+    - upload: $(Build.ArtifactStagingDirectory)/selenium.zip
+      artifact: Selenium            
+
 - stage: Deploy
   jobs:
-  - deployment: FakeRestAPI
+  - deployment: Deploy 
     pool:
       vmImage: $(vmImageName)
     environment: $(environmentName)
@@ -80,26 +97,15 @@ stages:
       runOnce:
         deploy:
           steps:
-          - task: ArchiveFiles@2
-      	    displayName: 'Archive Selenium files'
-      	    inputs:
-              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/selenium'
-              includeRootFolder: false
-              archiveType: zip
-              archiveFile: $(Build.ArtifactStagingDirectory)/selenium-test.zip
-              replaceExistingArchive: true
-    	 - upload: $(Build.ArtifactStagingDirectory)/selenium-test.zip
-           artifact: Selenium
-		- task: AzureWebApp@1
+          - task: AzureWebApp@1
             displayName: 'Deploy Azure Web App'
             inputs:
               azureSubscription: '$(service_name)'
               appName: '$(appName)'
               appType: webApp
               package: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
-
   - deployment: VMDeploy
-    displayName: Configure VM
+    displayName: VMDeploy
     environment:
       name:  $(environmentName)
       resourceType: VirtualMachine
@@ -112,70 +118,68 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                #! /bin/bash
-                sudo apt-get upgrade -y
-                sudo apt-get update
-                sudo apt-get install python3-pip -y
-                sudo apt-get install unzip -y
-                sudo apt-get install -y chromium-browser
-                pip3 install selenium
-                sudo rm -rf chromedriver*
-                wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip
-                unzip chromedriver_linux64.zip
-                sudo mv chromedriver /usr/bin/chromedriver
-                sudo chown root:root /usr/bin/chromedriver
-                sudo chmod +x /usr/bin/chromedriver
-                #log analytics agent
-                wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w <YOUR WORKSPACE ID> -s <YOUR WORKSPACE PRIMARY KEY> -d opinsights.azure.com
-
+               sudo apt-get update
+               sudo apt-get install unzip -y
+               sudo apt-get install -y chromium-browser	
+               if [ ! -f /usr/bin/chromedriver ]; then
+                  wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip
+                  unzip chromedriver_linux64.zip
+                  sudo mv chromedriver /usr/bin/chromedriver
+                  sudo chown root.root /usr/bin/chromedriver
+                  sudo chmod +x /usr/bin/chromedriver
+               fi	
+               sudo apt-get install python3-pip -y	
+               sudo pip3 install selenium==3.14.0	
+            displayName: 'Setup VM'
           - download: current
-            displayName: 'Download Selenium'
+            displayName: 'Download py file'
             artifact: Selenium
           - task: Bash@3
-            displayName: Selenuim Test
             inputs:
               targetType: 'inline'
               script: |
-                unzip -o $(Pipeline.Workspace)/Selenium/selenium-test.zip -d .
-                pwd
-                sudo mkdir logs
-                python3 login.py > UI_test.log
-                cat UI_test.log
-                sudo mv UI_test.log logs
+                if [ ! -d /var/log/selenium ]; then
+                  sudo mkdir /var/log/selenium
+                  sudo chmod 777 /var/log/selenium
+                fi
+                unzip -o $(Pipeline.Workspace)/Selenium/selenium.zip -d .
+                python3 uitest.py
+            displayName: 'Run UI Test'
+
 - stage: Tests
   jobs: 
     - job: Tests
-      displayName: Tests
+      displayName: 'Tests'
       steps:
       - task: Npm@1
-        displayName: 'Install Newman'
         inputs:
           workingDir: '$(System.DefaultWorkingDirectory)'
           verbose: false
+        displayName: 'Install Newman'
       - script: newman run ./automatedtesting/postman/StarterAPIs.json --reporters cli,junit --reporter-junit-export ./JUnitReport.xml --suppress-exit-code
         displayName: 'Run Newman'
         workingDirectory: '$(System.DefaultWorkingDirectory)'
       - task: PublishTestResults@2
-        displayName: 'Publish Test Results'
         inputs:
           testResultsFiles: JUnitReport.xml
           searchFolder: '$(System.DefaultWorkingDirectory)'
+        displayName: 'Publish Test Results'
       - task: JMeterInstaller@0
-        displayName: 'Install JMeter 5.2.1'
         inputs:
          jmeterVersion: '5.2.1'
+        displayName: 'Install JMeter 5.2.1' 
       - task: Bash@3
-        displayName: 'Jmeter Stress Test'
         inputs:
           targetType: 'inline'
           script: |
              jmeter -n -t ./automatedtesting/jmeter/Stress_test.jmx -l ./automatedtesting/jmeter/stress_test_result.csv -e -o ./automatedtesting/jmeter/stress_test_html_report/ -j ./automatedtesting/jmeter/jmeter_stress_test.log
+        displayName: 'Jmeter Stress Test' 
       - task: Bash@3
-        displayName: 'Jmeter Endurance Test'
         inputs:
           targetType: 'inline'
           script: |
              jmeter -n -t ./automatedtesting/jmeter/Endurance_test.jmx -l ./automatedtesting/jmeter/Endurance_test_result.csv -e -o ./automatedtesting/jmeter/Endurance_test_html_report/ -j ./automatedtesting/jmeter/jmeter_endurance_test.log
+        displayName: 'Jmeter Endurance Test' 
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: 'automatedtesting/jmeter'
