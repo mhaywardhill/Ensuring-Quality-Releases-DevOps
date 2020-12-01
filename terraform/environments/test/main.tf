@@ -50,7 +50,7 @@ module "publicip" {
 }
 module "vm" {
   source           = "../../modules/vm"
-  location         = var.location}"
+  location         = var.location
   resource_group   = module.resource_group.resource_group_name
   application_type = var.application_type
   resource_type    = "vm"
