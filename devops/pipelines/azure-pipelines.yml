@@ -131,7 +131,7 @@ stages:
                sudo apt-get install python3-pip -y	
                sudo pip3 install selenium==3.14.0
                #Log Analytics Agent
-               wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w '$(workspaceid)' -s '$(storage_key)' -d opinsights.azure.com	
+               #wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh && sh onboard_agent.sh -w '$(workspaceid)' -s '$(storage_key)' -d opinsights.azure.com	
             displayName: 'Setup VM'
           - download: current
             displayName: 'Download py file'
