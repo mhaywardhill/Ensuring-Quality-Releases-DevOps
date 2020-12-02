@@ -1,22 +1,27 @@
 import logging 
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 import time
 
 timestamp = time.strftime('%b-%d-%Y_%H%M')
-output_file = "/var/log/selenium/uitest_"+timestamp+".log"
+output_file = "uitest_"+timestamp+".log"
 
-#Create and configure logger 
-logging.basicConfig(filename=output_file, 
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    filemode='w') 
-#Creating an object 
-logger=logging.getLogger() 
+logger = logging.getLogger('')
+file_handler = logging.FileHandler(filename=output_file)
+stdout_handler = logging.StreamHandler(sys.stdout)
+handlers = [file_handler, stdout_handler]
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+file_handler.setFormatter(formatter)
+stdout_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.addHandler(stdout_handler)
   
-#Setting the threshold of logger to DEBUG 
-logger.setLevel(logging.DEBUG) 
+#Setting the threshold of logger to INFO 
+logger.setLevel(logging.INFO) 
 
 # Start the browser and login with standard_user
 def login (driver,user, password):
@@ -35,7 +40,6 @@ def remove_from_cart(item_title, button):
     button.click()
 
 def main():
-    logger.info("Starting the UI test")
     logger.info("Starting the browser")
     options = ChromeOptions()
     options.add_argument("--headless")
@@ -71,9 +75,7 @@ def main():
         button = item.find_element(
             By.CSS_SELECTOR, "button[class='btn_secondary cart_button']"
         )
-        remove_from_cart(title, button)	
-
-    logger.info("Finished the UI test")
+        remove_from_cart(title, button)
 
 if __name__ == "__main__":
     main()
