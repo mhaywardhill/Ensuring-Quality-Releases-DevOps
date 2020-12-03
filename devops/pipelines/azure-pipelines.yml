@@ -158,12 +158,12 @@ stages:
           workingDir: '$(System.DefaultWorkingDirectory)'
           verbose: false
         displayName: 'Install Newman'
-      - script: newman run ./automatedtesting/postman/StarterAPIs.json --reporters cli,junit --reporter-junit-export ./JUnitReport.xml --suppress-exit-code
+      - script: newman run ./automatedtesting/postman/regressiontest.json --reporters cli,junit --reporter-junit-export ./regressiontest.xml --suppress-exit-code
         displayName: 'Run Newman'
         workingDirectory: '$(System.DefaultWorkingDirectory)'
       - task: PublishTestResults@2
         inputs:
-          testResultsFiles: JUnitReport.xml
+          testResultsFiles: *.xml
           searchFolder: '$(System.DefaultWorkingDirectory)'
         displayName: 'Publish Test Results'
       - task: JMeterInstaller@0
