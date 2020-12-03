@@ -159,7 +159,10 @@ stages:
           verbose: false
         displayName: 'Install Newman'
       - script: newman run ./automatedtesting/postman/regressiontest.json --reporters cli,junit --reporter-junit-export ./regressiontest.xml --suppress-exit-code
-        displayName: 'Run Newman'
+        displayName: 'Run Newman Regression Test'
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+      - script: newman run ./automatedtesting/postman/validationtest.json -e automatedtesting/postman/validationtestenv.postman_environment.json --reporters cli,junit --reporter-junit-export ./regressiontest.xml --suppress-exit-code
+        displayName: 'Run Newman Validation Test'
         workingDirectory: '$(System.DefaultWorkingDirectory)'
       - task: PublishTestResults@2
         inputs:
