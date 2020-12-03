@@ -166,7 +166,7 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)'
       - task: PublishTestResults@2
         inputs:
-          testResultsFiles: './*.xml'
+          testResultsFiles: '$(System.DefaultWorkingDirectory)/*.xml'
           searchFolder: '$(System.DefaultWorkingDirectory)'
         displayName: 'Publish Test Results'
       - task: JMeterInstaller@0
